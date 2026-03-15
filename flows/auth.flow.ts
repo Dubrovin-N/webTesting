@@ -9,19 +9,19 @@ export class AuthFlow {
   }
 
   /**
-   * + Логин через UI (для создания сессии в браузере)
+   * SDET Approach: Полный обход UI-авторизации через API.
+   * Это решает проблему с Cloudflare в GitHub Actions.
    */
   async registerAndLogin(userData: any) {
-    const loginPage = new LoginPage(this.page);
+    const apiContext = await request.newContext();
 
     // 1. РЕГИСТРАЦИЯ ЧЕРЕЗ API
-    const apiContext = await request.newContext();
-    
-    const response = await apiContext.post('https://api.practicesoftwaretesting.com/users/register', {
+    // Используем snake_case для ключей, как требует сервер
+    const regResponse = await apiContext.post('https://api.practicesoftwaretesting.com/users/register', {
       data: {
         first_name: userData.firstName,
         last_name: userData.lastName,
-        address: [userData.address], 
+        address: [userData.address], // Оборачиваем в массив (требование API)
         city: userData.city,
         state: userData.state,
         country: userData.country,
@@ -33,25 +33,46 @@ export class AuthFlow {
       }
     });
 
-    // Проверка успешности API запроса
-    const responseBody = await response.text();
-    expect(response.status(), `API registration failed: ${responseBody}`).toBe(201);
+    // Проверяем статус 201 (Created)
+    expect(regResponse.status(), `API Registration failed: ${await regResponse.text()}`).toBe(201);
 
-    // 2. ЛОГИН ЧЕРЕЗ UI
-    await loginPage.goto();
-    
-    // Небольшая пауза, чтобы сервер успел обновить индексы базы данных
-    await this.page.waitForTimeout(1500); 
+    // 2. ЛОГИН ЧЕРЕЗ API ДЛЯ ПОЛУЧЕНИЯ ТОКЕНА
+    const loginResponse = await apiContext.post('https://api.practicesoftwaretesting.com/users/login', {
+      data: {
+        email: userData.email,
+        password: userData.password
+      }
+    });
 
-    // Выполняем вход
-    await loginPage.login(userData.email, userData.password);
+    expect(loginResponse.status(), 'API Login failed').toBe(200);
+    const loginData = await loginResponse.json();
+    const token = loginData.access_token;
+
+    if (!token) {
+      throw new Error('API login success, but no access_token received');
+    }
+
+    // 3. ИНЪЕКЦИЯ ТОКЕНА В БРАУЗЕР (ОБХОД CLOUDFLARE)
+    // Заходим на главную, чтобы инициализировать домен для LocalStorage
+    await this.page.goto('/');
     
-    // Проверяем, что попали в личный кабинет
-    await expect(this.page).toHaveURL(/.*account/, { timeout: 15000 });
+    // Выполняем скрипт внутри браузера для записи токена
+    await this.page.evaluate((t) => {
+      localStorage.setItem('auth-token', t);
+    }, token);
+
+    // 4. ПЕРЕХОД В АККАУНТ
+    // Теперь сайт считает нас авторизованными без ввода пароля в UI
+    await this.page.goto('/account');
+    
+    // Проверка успешности входа
+    const pageTitle = this.page.locator('[data-test="page-title"]');
+    await expect(pageTitle).toBeVisible({ timeout: 15000 });
+    await expect(pageTitle).toContainText('My account');
   }
 
   /**
-   * Обычный логин существующего пользователя через UI
+   * Просто логин существующего пользователя (через UI, если нужно проверить саму форму)
    */
   async login(email: string, pass: string) {
     const loginPage = new LoginPage(this.page);
@@ -64,8 +85,15 @@ export class AuthFlow {
    * Выход из системы
    */
   async logout() {
+    // Открываем меню и жмем выход
     await this.page.locator('[data-test="nav-menu"]').click();
     await this.page.locator('[data-test="nav-logout"]').click();
+    
+    // Проверяем, что токен удалился и мы на странице логина/главной
     await expect(this.page).toHaveURL(/.*|.*login/);
+    
+    // Проверяем, что токен стерся из памяти
+    const token = await this.page.evaluate(() => localStorage.getItem('auth-token'));
+    expect(token).toBeNull();
   }
 }
