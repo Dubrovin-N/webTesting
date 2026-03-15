@@ -54,7 +54,7 @@ export class AuthFlow {
 
     // 3. ИНЪЕКЦИЯ ТОКЕНА В БРАУЗЕР (ОБХОД CLOUDFLARE)
     // Заходим на главную, чтобы инициализировать домен для LocalStorage
-    await this.page.goto('/');
+    await this.page.goto('/favicon.ico');
     
     // Выполняем скрипт внутри браузера для записи токена
     await this.page.evaluate((t) => {
@@ -63,7 +63,7 @@ export class AuthFlow {
 
     // 4. ПЕРЕХОД В АККАУНТ
     // Теперь сайт считает нас авторизованными без ввода пароля в UI
-    await this.page.goto('/account');
+    await this.page.goto('/account', { waitUntil: 'networkidle' });
     
     // Проверка успешности входа
     const pageTitle = this.page.locator('[data-test="page-title"]');
@@ -74,11 +74,34 @@ export class AuthFlow {
   /**
    * Просто логин существующего пользователя (через UI, если нужно проверить саму форму)
    */
-  async login(email: string, pass: string) {
+  async loginViaUI(email: string, pass: string) {
     const loginPage = new LoginPage(this.page);
     await loginPage.goto();
     await loginPage.login(email, pass);
     await expect(this.page).toHaveURL(/.*account/);
+  }
+
+  async login(email: string, pass: string) {
+    const apiContext = await request.newContext();
+
+    // 1. Получаем токен через API
+    const loginResponse = await apiContext.post('https://api.practicesoftwaretesting.com/users/login', {
+      data: { email, password: pass }
+    });
+
+    expect(loginResponse.status(), `API Login failed for ${email}`).toBe(200);
+    const loginData = await loginResponse.json();
+    const token = loginData.access_token;
+
+    // 2. Инъекция в браузер
+    await this.page.goto('/');
+    await this.page.evaluate((t) => {
+      localStorage.setItem('auth-token', t);
+    }, token);
+
+    // 3. Переход в аккаунт для проверки
+    await this.page.goto('/account');
+    await expect(this.page.locator('[data-test="page-title"]')).toContainText('My account');
   }
 
   /**
