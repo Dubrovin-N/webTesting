@@ -32,9 +32,14 @@ export default defineConfig({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
+    ignoreHTTPSErrors: true,
+    permissions: ['geolocation'],
 
     launchOptions: {
-      args: ['--disable-blink-features=AutomationControlled']
+      args: ['--disable-blink-features=AutomationControlled',
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      ]
     },
   
     /* Base URL to use in actions like `await page.goto('')`. */

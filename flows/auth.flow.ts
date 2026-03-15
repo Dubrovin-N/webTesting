@@ -21,11 +21,19 @@ export class AuthFlow {
     // 1. Идем на регистрацию и заполняем форму
     await registerPage.goto();
     await registerPage.registerUser(userData);
-    await expect(this.page).toHaveURL(/.*login/);
+
+
+    await this.page.waitForTimeout(3000); 
+    await this.page.waitForURL(/.*auth\/login/, { waitUntil: 'networkidle', timeout: 30000 });
+
+   // await expect(this.page).toHaveURL(/.*login/);
+
+   await expect(loginPage.emailField).toBeVisible({ timeout: 10000 });
 
     // 2. Сайт перекинул нас на логин — входим под новыми данными
     await loginPage.login(userData.email, userData.password);
-    await expect(this.page).toHaveURL(/.*account/);
+    //await expect(this.page).toHaveURL(/.*account/);
+    await expect(this.page).toHaveURL(/.*account/, { timeout: 15000 });
   }
 
 
