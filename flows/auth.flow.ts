@@ -1,7 +1,5 @@
-import { Page, expect } from '@playwright/test';
-import { RegisterPage } from '../pages/register-page';
+import { Page, expect, request } from '@playwright/test';
 import { LoginPage } from '../pages/login-page';
-
 
 export class AuthFlow {
   readonly page: Page;
@@ -11,34 +9,49 @@ export class AuthFlow {
   }
 
   /**
-   * Этот метод делает "грязную работу":
-   * Регистрирует юзера и сразу логинит его, чтобы тест начался уже в системе.
+   * + Логин через UI (для создания сессии в браузере)
    */
   async registerAndLogin(userData: any) {
-    const registerPage = new RegisterPage(this.page);
     const loginPage = new LoginPage(this.page);
 
-    // 1. Идем на регистрацию и заполняем форму
-    await registerPage.goto();
-    await registerPage.registerUser(userData);
+    // 1. РЕГИСТРАЦИЯ ЧЕРЕЗ API
+    const apiContext = await request.newContext();
+    
+    const response = await apiContext.post('https://api.practicesoftwaretesting.com/users/register', {
+      data: {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        address: [userData.address], 
+        city: userData.city,
+        state: userData.state,
+        country: userData.country,
+        postcode: userData.postCode,
+        phone: userData.phone,
+        dob: userData.dob,
+        email: userData.email,
+        password: userData.password
+      }
+    });
 
+    // Проверка успешности API запроса
+    const responseBody = await response.text();
+    expect(response.status(), `API registration failed: ${responseBody}`).toBe(201);
 
-    await this.page.waitForTimeout(3000); 
-    await this.page.waitForURL(/.*auth\/login/, { waitUntil: 'networkidle', timeout: 30000 });
+    // 2. ЛОГИН ЧЕРЕЗ UI
+    await loginPage.goto();
+    
+    // Небольшая пауза, чтобы сервер успел обновить индексы базы данных
+    await this.page.waitForTimeout(1500); 
 
-   // await expect(this.page).toHaveURL(/.*login/);
-
-   await expect(loginPage.emailField).toBeVisible({ timeout: 10000 });
-
-    // 2. Сайт перекинул нас на логин — входим под новыми данными
+    // Выполняем вход
     await loginPage.login(userData.email, userData.password);
-    //await expect(this.page).toHaveURL(/.*account/);
+    
+    // Проверяем, что попали в личный кабинет
     await expect(this.page).toHaveURL(/.*account/, { timeout: 15000 });
   }
 
-
   /**
-   * Просто логин существующего пользователя.
+   * Обычный логин существующего пользователя через UI
    */
   async login(email: string, pass: string) {
     const loginPage = new LoginPage(this.page);
@@ -48,14 +61,11 @@ export class AuthFlow {
   }
 
   /**
-   * Выход из системы.
+   * Выход из системы
    */
   async logout() {
-    // Кликаем по меню и кнопке выхода
     await this.page.locator('[data-test="nav-menu"]').click();
     await this.page.locator('[data-test="nav-logout"]').click();
-    
-    // Проверяем, что вернулись на главную или страницу логина
     await expect(this.page).toHaveURL(/.*|.*login/);
   }
 }
