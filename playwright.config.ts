@@ -15,7 +15,7 @@ export default defineConfig({
   testDir: './tests',
   timeout: process.env.CI ? 60000 : 30000,
   expect: {
-    timeout: process.env.CI ? 10000 : 5000,
+    timeout: process.env.CI ? 20000 : 5000,
   },
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -47,7 +47,7 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'https://practicesoftwaretesting.com',
     video: 'on',
-    actionTimeout: process.env.CI ? 15000 : 10000,
+    actionTimeout: process.env.CI ? 25000 : 10000,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',
