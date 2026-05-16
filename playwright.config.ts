@@ -13,7 +13,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
-  timeout: process.env.CI ? 60000 : 30000, 
+  timeout: process.env.CI ? 60000 : 30000,
   expect: {
     timeout: process.env.CI ? 10000 : 5000,
   },
@@ -22,26 +22,28 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    userAgent:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
     ignoreHTTPSErrors: true,
     permissions: ['geolocation'],
 
     launchOptions: {
-      args: ['--disable-blink-features=AutomationControlled',
-      '--use-fake-ui-for-media-stream',
-      '--use-fake-device-for-media-stream',
-      ]
+      args: [
+        '--disable-blink-features=AutomationControlled',
+        '--use-fake-ui-for-media-stream',
+        '--use-fake-device-for-media-stream',
+      ],
     },
-  
+
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'https://practicesoftwaretesting.com',
     video: 'on',
@@ -54,11 +56,17 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'], // This guarantees setup runs FIRST
+      testIgnore: /.*\.setup\.ts/, // Don't run setup files as regular tests
     },
 
-/*     {
+    /*     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },

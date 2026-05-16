@@ -8,7 +8,6 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    // Мы перенесли их сюда из твоего теста
     this.emailField = page.locator('[data-test="email"]');
     this.passwordField = page.locator('[data-test="password"]');
     this.loginBtn = page.locator('[data-test="login-submit"]');

@@ -17,7 +17,6 @@ export class RegisterPage {
 
   constructor(page: Page) {
     this.page = page;
-    // Мы находим элементы по "data-test" атрибутам — это самый надежный способ!
     this.firstName = page.locator('[data-test="first-name"]');
     this.lastName = page.locator('[data-test="last-name"]');
     this.dob = page.locator('[data-test="dob"]');
@@ -36,19 +35,18 @@ export class RegisterPage {
     await this.page.goto('https://practicesoftwaretesting.com/auth/register');
   }
 
-
-async registerUser(userData: any) {
-  await this.firstName.fill(userData.firstName);
-  await this.lastName.fill(userData.lastName);
-  await this.dob.fill(userData.dob);
-  await this.address.fill(userData.address);
-  await this.postCode.fill(userData.postCode);
-  await this.city.fill(userData.city);
-  await this.state.fill(userData.state);
-  await this.country.selectOption(userData.country);
-  await this.phone.fill(userData.phone);
-  await this.email.fill(userData.email);
-  await this.password.fill(userData.password);
-  await this.registerBtn.click();
-}
+  async registerUser(userData: any) {
+    await this.firstName.fill(userData.firstName);
+    await this.lastName.fill(userData.lastName);
+    await this.dob.fill(userData.dob);
+    await this.address.fill(userData.address);
+    await this.postCode.fill(userData.postCode);
+    await this.city.fill(userData.city);
+    await this.state.fill(userData.state);
+    await this.country.selectOption(userData.country);
+    await this.phone.fill(userData.phone);
+    await this.email.fill(userData.email);
+    await this.password.fill(userData.password);
+    await this.registerBtn.click();
+  }
 }

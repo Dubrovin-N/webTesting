@@ -1,14 +1,14 @@
 import { faker } from '@faker-js/faker';
 
 export const getRandomPassword = () => {
-  // Генерируем уникальный пароль, добавляя случайное число и спецсимволы
+  // generate a random password with at least 12 characters, including uppercase, lowercase, numbers, and special characters
   return `${faker.internet.password({ length: 12 })}!A1${faker.string.numeric(3)}`;
 };
 
 export const createRandomUser = () => {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
-  
+
   return {
     firstName,
     lastName,
@@ -24,8 +24,7 @@ export const createRandomUser = () => {
   };
 };
 
-
 export const createInvalidUser = () => ({
   ...createRandomUser(),
-  email: 'invalid-email-format', 
+  email: 'invalid-email-format',
 });

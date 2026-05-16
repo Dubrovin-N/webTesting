@@ -7,7 +7,7 @@ export class HomePage {
 
   constructor(page: Page) {
     this.page = page;
-    // Ищем все названия товаров и берем первое попавшееся
+    // searching for product and choosing the first one in the list to avoid issues with dynamic content and multiple products with same name
     this.productTitle = page.locator('[data-test="product-name"]');
     this.productPrice = page.locator('[data-test="product-price"]');
   }
@@ -17,7 +17,7 @@ export class HomePage {
   }
 
   async clickOnFirstProduct() {
-    // Кликаем именно по первому элементу в списке
+    // clicking on the first product in the list
     await this.productTitle.first().click();
   }
 }

@@ -7,7 +7,6 @@ test('User Journey: Full Registration and Profile Verification', async ({ page }
   const authFlow = new AuthFlow(page);
 
   await test.step('Register and Login', async () => {
-    // Весь твой прошлый Step 2 и Step 3 теперь здесь:
     await authFlow.registerAndLogin(randomUser);
     await expect(page).not.toHaveURL(/.*login/);
   });
@@ -16,11 +15,11 @@ test('User Journey: Full Registration and Profile Verification', async ({ page }
     const pageTitle = page.locator('[data-test="page-title"]');
     await expect(pageTitle).toBeVisible();
     await expect(pageTitle).toContainText('My account');
-    
+
     const pageUserName = page.locator('[data-test="nav-menu"]');
     await expect(pageUserName).toHaveText(
-      new RegExp(`${randomUser.firstName}\\s+${randomUser.lastName}`), 
-      { ignoreCase: true }
+      new RegExp(`${randomUser.firstName}\\s+${randomUser.lastName}`),
+      { ignoreCase: true },
     );
   });
 });
