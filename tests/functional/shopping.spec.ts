@@ -5,13 +5,16 @@ import { ShopFlow } from '../../flows/shop-flow';
 import { PurchaseFlow } from '../../flows/purchase-flow';
 
 test.describe('Shopping & Checkout Functionality', () => {
+  let authFlow: AuthFlow;
   let shopFlow: ShopFlow;
   let purchaseFlow: PurchaseFlow;
 
   test.beforeEach(async ({ page }) => {
+    authFlow = new AuthFlow(page);
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
 
+    // Required mock of the products catalog to bypass Cloudflare blocks on CI environment
     await page.route('**/api/products**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -34,55 +37,22 @@ test.describe('Shopping & Checkout Functionality', () => {
 
   test('Registered user can add a product to the cart and successfully complete a purchase', async ({
     page,
-    browser,
   }) => {
     const user = createRandomUser();
     const targetProduct = 'Combination Pliers';
 
-    // ==========================================
-    // Step 1: registration and login
-    // ==========================================
-    const tempContext = await browser.newContext();
-    const tempPage = await tempContext.newPage();
-    const authFlow = new AuthFlow(tempPage);
-
-    // registration and login
+    // 1. Setup: Register and log in via API token
+    // This method injects the token into localStorage and navigates to the /account page
     await authFlow.registerAndLogin(user);
-    await expect(tempPage).not.toHaveURL(/.*login/);
 
-    await tempPage.waitForLoadState('networkidle');
+    // 2. Act: Navigate to the home page using a UI click on the logo
+    // This avoids re-triggering the initScript and prevents Angular application race conditions
+    await page.getByRole('link', { name: 'Practice Software Testing -' }).click();
 
-    // getting storage state (cookies + localStorage) from the temp context
-    const savedState = await tempContext.storageState();
-
-    await tempContext.close();
-
-    // ==========================================
-    // Step 2: set authenticated state in main test context
-    // ==========================================
-
-    await page.goto('/');
-
-    // add cookies
-    await page.context().addCookies(savedState.cookies);
-
-    // localsorage
-    if (savedState.origins.length > 0) {
-      const originData = savedState.origins[0];
-      await page.evaluate((localStorageItems) => {
-        localStorageItems.forEach((item) => {
-          localStorage.setItem(item.name, item.value);
-        });
-      }, originData.localStorage);
-    }
-
-    await page.reload();
-
-    // ==========================================
-    //  step 3: purchase flow
-    // ==========================================
-    await expect(page.locator('[data-test="nav-menu"]')).toBeVisible();
+    // 3. Act: Search and add the tool to the cart using ShopFlow
     await shopFlow.addProductToCart(targetProduct, 1);
+
+    // 4. Act & Assert: Complete the checkout process with Cash on Delivery and verify success
     await purchaseFlow.completeCheckoutWithCashOnDelivery(user);
   });
 });
