@@ -14,7 +14,7 @@ export class PurchaseFlow {
   /**
    * Executes the complete checkout process using dynamic data from the test execution.
    */
-  async completeCheckoutWithCashOnDelivery(user: any) {
+  async completeCheckoutWithCashOnDelivery(user?: any) {
     // 1. Anti-overlap protection
     const successToast = this.page.locator('#toast-container, .toast-message').first();
     if (await successToast.isVisible()) {

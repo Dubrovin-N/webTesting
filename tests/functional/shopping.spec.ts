@@ -13,13 +13,33 @@ test.describe('Shopping & Checkout Functionality', () => {
     authFlow = new AuthFlow(page);
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
+
+    // ОБХОД CLOUDFLARE: Перехватываем запрос товаров и мгновенно отдаем JSON из памяти
+    await page.route('**/api/products**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: '01HJMV9SAMJ687EDB9A9BMRN4A',
+            name: 'Combination Pliers',
+            description: 'High-quality professional pliers.',
+            price: 14.5,
+            is_location_offer: false,
+            is_rental: false,
+            image: 'assets/images/products/pliers.png',
+            category: { id: '1', name: 'Hand Tools' },
+          },
+        ]),
+      });
+    });
   });
 
-  test('User can add a product to the cart and successfully complete a purchase', async ({
+  test('Registered user can add a product to the cart and successfully complete a purchase', async ({
     page,
   }) => {
     const user = createRandomUser();
-    const targetProduct = 'Combination Pliers'; // Example product name from Toolshop
+    const targetProduct = 'Combination Pliers';
 
     // 1. Setup: Register and log in via API for maximum stability
     await authFlow.registerAndLogin(user);
@@ -28,7 +48,7 @@ test.describe('Shopping & Checkout Functionality', () => {
     // 2. Act: Search and add the tool to the cart using ShopFlow
     await shopFlow.addProductToCart(targetProduct, 1);
 
-    // 3. Act & Assert: Go through the checkout steps and verify the purchase
-    await purchaseFlow.completeCheckoutWithCashOnDelivery();
+    // 3. Act & Assert: Передаем юзера сюда, чтобы исправить ошибку Expected 1 arguments
+    await purchaseFlow.completeCheckoutWithCashOnDelivery(user);
   });
 });

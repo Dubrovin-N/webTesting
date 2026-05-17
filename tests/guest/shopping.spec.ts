@@ -13,12 +13,32 @@ test.describe('Shopping & Checkout Functionality', () => {
     authFlow = new AuthFlow(page);
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
+
+    // ОБХОД CLOUDFLARE: Точно так же изолируем гостевой тест от капризов внешнего бэкенда
+    await page.route('**/api/products**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            id: '01HJMV9SAMJ687EDB9A9BMRN4A',
+            name: 'Combination Pliers',
+            description: 'High-quality professional pliers.',
+            price: 14.5,
+            is_location_offer: false,
+            is_rental: false,
+            image: 'assets/images/products/pliers.png',
+            category: { id: '1', name: 'Hand Tools' },
+          },
+        ]),
+      });
+    });
   });
 
-  test('User can add a product to the cart and successfully complete a purchase', async ({
+  test('Guest user can add a product to the cart and successfully complete a purchase', async ({
     page,
   }) => {
-    const user = createRandomUser(); // Dynamic user created here
+    const user = createRandomUser();
     const targetProduct = 'Combination Pliers';
 
     // 1. Register and log in via API

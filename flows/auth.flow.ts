@@ -56,10 +56,16 @@ export class AuthFlow {
     }
 
     // inject token into browser's localStorage to bypass Cloudflare and UI login
-    await this.page.goto('/favicon.ico');
+    /*     await this.page.goto('/favicon.ico');
 
     await this.page.evaluate((t) => {
       localStorage.setItem('auth-token', t);
+    }, token); */
+
+    // Alternative approach using context to set token before any page loads, ensuring it's available immediately
+    const context = this.page.context();
+    await context.addInitScript((t) => {
+      window.localStorage.setItem('auth-token', t);
     }, token);
 
     //navigate to account page to verify login success
