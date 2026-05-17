@@ -1,20 +1,17 @@
 import { test } from '@playwright/test';
 import { createRandomUser } from '../../data/user-factory';
-import { AuthFlow } from '../../flows/auth.flow';
 import { ShopFlow } from '../../flows/shop-flow';
 import { PurchaseFlow } from '../../flows/purchase-flow';
 
 test.describe('Shopping & Checkout Functionality', () => {
-  let authFlow: AuthFlow;
   let shopFlow: ShopFlow;
   let purchaseFlow: PurchaseFlow;
 
   test.beforeEach(async ({ page }) => {
-    authFlow = new AuthFlow(page);
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
 
-    // ОБХОД CLOUDFLARE: Точно так же изолируем гостевой тест от капризов внешнего бэкенда
+    //CLOUDFLARE BYPASS: Intercepting product request and instantly serving in-memory JSON --- IGNORE ---
     await page.route('**/api/products**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -41,14 +38,8 @@ test.describe('Shopping & Checkout Functionality', () => {
     const user = createRandomUser();
     const targetProduct = 'Combination Pliers';
 
-    // 1. Register and log in via API
-    await authFlow.registerAndLogin(user);
     await page.goto('/');
-
-    // 2. Add item to cart
     await shopFlow.addProductToCart(targetProduct, 1);
-
-    // 3. Complete checkout using the SAME user object data
     await purchaseFlow.completeCheckoutWithCashOnDelivery(user);
   });
 });

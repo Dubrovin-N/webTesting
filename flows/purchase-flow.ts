@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { CartPage } from '../pages/cart-page';
 import { AppConstants } from '../data/constants';
+import { LoginPage } from '../pages/login-page';
 
 export class PurchaseFlow {
   private readonly page: Page;
@@ -29,7 +30,14 @@ export class PurchaseFlow {
     // 3. Initiate checkout wizard
     await this.cartPage.proceedToCheckout();
 
-    // Step 1: Sign in step validation
+    // Step 1: Handle authentication wizard routing (Sign In vs Guest layout split)
+
+    const loginPage = new LoginPage(this.page);
+    const isGuestFlow = await loginPage.selectGuestCheckoutOption();
+
+    //if guest flow is not available, we assume user is already logged in and proceed with checkout
+    await loginPage.selectGuestCheckoutOption(user);
+
     const step1Btn = this.page.getByRole('button', { name: 'Proceed to checkout' });
     await step1Btn.waitFor({ state: 'visible', timeout: AppConstants.TIMEOUTS.SHORT });
     await step1Btn.click();

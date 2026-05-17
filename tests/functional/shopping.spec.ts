@@ -14,7 +14,6 @@ test.describe('Shopping & Checkout Functionality', () => {
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
 
-    // ОБХОД CLOUDFLARE: Перехватываем запрос товаров и мгновенно отдаем JSON из памяти
     await page.route('**/api/products**', async (route) => {
       await route.fulfill({
         status: 200,
@@ -48,7 +47,7 @@ test.describe('Shopping & Checkout Functionality', () => {
     // 2. Act: Search and add the tool to the cart using ShopFlow
     await shopFlow.addProductToCart(targetProduct, 1);
 
-    // 3. Act & Assert: Передаем юзера сюда, чтобы исправить ошибку Expected 1 arguments
+    // 3. Act & Assert: Complete checkout with Cash on Delivery and verify success
     await purchaseFlow.completeCheckoutWithCashOnDelivery(user);
   });
 });
