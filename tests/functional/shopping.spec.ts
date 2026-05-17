@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { createRandomUser } from '../../data/user-factory';
 import { AuthFlow } from '../../flows/auth.flow';
 import { ShopFlow } from '../../flows/shop-flow';
@@ -40,8 +40,9 @@ test.describe('Shopping & Checkout Functionality', () => {
     const user = createRandomUser();
     const targetProduct = 'Combination Pliers';
 
-    // 1. Setup: Register and log in via API for maximum stability
+    // 1. Setup: Register and log in
     await authFlow.registerAndLogin(user);
+    await expect(page).not.toHaveURL(/.*login/);
     await page.goto('/');
 
     // 2. Act: Search and add the tool to the cart using ShopFlow
