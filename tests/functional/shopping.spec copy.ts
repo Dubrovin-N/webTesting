@@ -5,10 +5,12 @@ import { ShopFlow } from '../../flows/shop-flow';
 import { PurchaseFlow } from '../../flows/purchase-flow';
 
 test.describe('Shopping & Checkout Functionality', () => {
+  let authFlow: AuthFlow;
   let shopFlow: ShopFlow;
   let purchaseFlow: PurchaseFlow;
 
   test.beforeEach(async ({ page }) => {
+    authFlow = new AuthFlow(page);
     shopFlow = new ShopFlow(page);
     purchaseFlow = new PurchaseFlow(page);
 
@@ -34,55 +36,19 @@ test.describe('Shopping & Checkout Functionality', () => {
 
   test('Registered user can add a product to the cart and successfully complete a purchase', async ({
     page,
-    browser,
   }) => {
     const user = createRandomUser();
     const targetProduct = 'Combination Pliers';
 
-    // ==========================================
-    // Step 1: registration and login
-    // ==========================================
-    const tempContext = await browser.newContext();
-    const tempPage = await tempContext.newPage();
-    const authFlow = new AuthFlow(tempPage);
-
-    // registration and login
+    // 1. Setup: Register and log in
     await authFlow.registerAndLogin(user);
-    await expect(tempPage).not.toHaveURL(/.*login/);
-
-    await tempPage.waitForLoadState('networkidle');
-
-    // getting storage state (cookies + localStorage) from the temp context
-    const savedState = await tempContext.storageState();
-
-    await tempContext.close();
-
-    // ==========================================
-    // Step 2: set authenticated state in main test context
-    // ==========================================
-
+    await expect(page).not.toHaveURL(/.*login/);
     await page.goto('/');
 
-    // add cookies
-    await page.context().addCookies(savedState.cookies);
-
-    // localsorage
-    if (savedState.origins.length > 0) {
-      const originData = savedState.origins[0];
-      await page.evaluate((localStorageItems) => {
-        localStorageItems.forEach((item) => {
-          localStorage.setItem(item.name, item.value);
-        });
-      }, originData.localStorage);
-    }
-
-    await page.reload();
-
-    // ==========================================
-    //  step 3: purchase flow
-    // ==========================================
-    await expect(page.locator('[data-test="nav-menu"]')).toBeVisible();
+    // 2. Act: Search and add the tool to the cart using ShopFlow
     await shopFlow.addProductToCart(targetProduct, 1);
+
+    // 3. Act & Assert: Complete checkout with Cash on Delivery and verify success
     await purchaseFlow.completeCheckoutWithCashOnDelivery(user);
   });
 });
