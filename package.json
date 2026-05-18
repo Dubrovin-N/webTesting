@@ -1,14 +1,33 @@
 {
   "name": "webtesting",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui",
+    "test:auth": "npx playwright test tests/auth/",
+    "test:func": "npx playwright test tests/functional/",
+    "test:static": "npx playwright test tests/static/",
+    "codegen": "npx playwright codegen",
+    "prepare": "husky"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@faker-js/faker": "^10.3.0",
     "@playwright/test": "^1.58.2",
-    "@types/node": "^25.2.1"
+    "@types/node": "^25.2.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.8.3"
+  },
+  "lint-staged": {
+    "**/*.{ts,js,json,md}": "prettier --write"
+  },
+  "dependencies": {
+    "playwright-stealth": "^0.0.1"
   }
 }
