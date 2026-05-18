@@ -1,4 +1,5 @@
 import { Locator, Page, expect } from '@playwright/test';
+import { AppConstants } from '../data/constants';
 
 export class ProductPage {
   readonly page: Page;
@@ -46,7 +47,7 @@ export class ProductPage {
     await this.addToCartBtn.click();
 
     // 1. Wait for the element to actually exist in DOM
-    await this.successMessage.waitFor({ state: 'attached', timeout: 5000 });
+    await this.successMessage.waitFor({ state: 'attached', timeout: AppConstants.TIMEOUTS.SHORT });
 
     // 2. Now check the text
     await expect(this.successMessage).toContainText('Product added to shopping cart');

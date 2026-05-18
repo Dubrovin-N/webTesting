@@ -1,8 +1,12 @@
 import { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
+import { AppConstants } from '../data/constants';
 
 export class ProfilePage {
   readonly page: Page;
+  readonly pageTitle: Locator;
+  readonly navMenu: Locator;
+  readonly navProfile: Locator;
   readonly firstNameField: Locator;
   readonly lastNameField: Locator;
   readonly emailField: Locator;
@@ -21,6 +25,9 @@ export class ProfilePage {
 
   constructor(page: Page) {
     this.page = page;
+    this.pageTitle = page.locator('[data-test="page-title"]');
+    this.navMenu = page.locator('[data-test="nav-menu"]');
+    this.navProfile = page.locator('[data-test="nav-profile"]');
     // profile fields
     this.firstNameField = page.locator('[data-test="first-name"]');
     this.lastNameField = page.locator('[data-test="last-name"]');
@@ -63,9 +70,9 @@ export class ProfilePage {
     await this.currentPasswordField.fill(oldPass);
     await this.newPasswordField.fill(newPass);
     await this.confirmPasswordField.fill(newPass);
-    await expect(this.changePasswordBtn).toBeEnabled({ timeout: 25000 });
+    await expect(this.changePasswordBtn).toBeEnabled({ timeout: AppConstants.TIMEOUTS.LONG });
 
-    await expect(this.qrCodeCanvas).toBeVisible({ timeout: 15000 });
+    await expect(this.qrCodeCanvas).toBeVisible({ timeout: AppConstants.TIMEOUTS.MEDIUM });
 
     await this.eyeIcon.click();
 
@@ -74,5 +81,10 @@ export class ProfilePage {
     await this.eyeIcon.click();
 
     await this.changePasswordBtn.click();
+  }
+
+  async openProfileSettings() {
+    await this.navMenu.click();
+    await this.navProfile.click();
   }
 }

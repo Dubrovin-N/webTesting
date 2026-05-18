@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createRandomUser, getRandomPassword } from '../../data/user-factory';
 import { AuthFlow } from '../../flows/auth.flow';
 import { ProfilePage } from '../../pages/profile-page';
-import { get } from 'node:http';
+import { AppConstants } from '../../data/constants';
 
 test.describe('Profile Management', () => {
   let authFlow: AuthFlow;
@@ -19,8 +19,7 @@ test.describe('Profile Management', () => {
 
     await authFlow.registerAndLogin(user);
 
-    await page.locator('[data-test="nav-menu"]').click();
-    await page.locator('[data-test="nav-profile"]').click();
+    await profilePage.openProfileSettings();
 
     await test.step('Update name and verify', async () => {
       await profilePage.updateContactInfo(newFirstName, user.lastName);
@@ -35,14 +34,13 @@ test.describe('Profile Management', () => {
     await authFlow.registerAndLogin(user);
     const profilePage = new ProfilePage(page);
 
-    await page.locator('[data-test="nav-menu"]').click();
-    await page.locator('[data-test="nav-profile"]').click();
+    await profilePage.openProfileSettings();
 
     await test.step('Change password', async () => {
       await profilePage.changePassword(user.password, newPassword);
       const successMessage = page.locator('.alert-success, [role="alert"]');
 
-      await expect(successMessage).toBeVisible({ timeout: 10000 });
+      await expect(successMessage).toBeVisible({ timeout: AppConstants.TIMEOUTS.MEDIUM });
       await expect(successMessage).toContainText('Your password is successfully updated!', {
         ignoreCase: true,
       });
@@ -53,7 +51,7 @@ test.describe('Profile Management', () => {
       await authFlow.login(user.email, newPassword);
 
       // if we see the profile page, it means login was successful
-      await expect(page.locator('[data-test="page-title"]')).toContainText('My account');
+      await expect(profilePage.pageTitle).toContainText('My account');
     });
   });
 });
