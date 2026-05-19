@@ -1,3 +1,4 @@
+declare const process: any;
 import { test as setup, expect } from '@playwright/test';
 
 setup('Environment Health Check', async ({ page, request }) => {
@@ -8,15 +9,13 @@ setup('Environment Health Check', async ({ page, request }) => {
   expect(response?.status()).toBe(200);
   console.log('✅ Front-end is UP (Status 200)');
 
-  // 2. Check if the Back-end API is responding
-  const isCloudEnvironment = process.env.CI || process.env.BROWSERSTACK_USERNAME;
-
-  if (isCloudEnvironment) {
+  // 2. Check if the Back-end API is responding (bypassed on CI)
+  if (process.env.CI === 'true') {
     console.log(
-      '⚠️ Running in Cloud/CI/BrowserStack environment: Skipping direct API check to bypass Cloudflare 403.',
+      '⚠️ Running in CI environment: Skipping direct API check to bypass Cloudflare 403.',
     );
   } else {
-    console.log('💻 Running locally on physical machine: Executing full API health check...');
+    console.log('💻 Running locally: Executing full API health check...');
     const apiResponse = await request.get('/api/products', {
       headers: {
         'User-Agent':

@@ -22,11 +22,13 @@ jobs:
         run: docker build -t my-playwright-tests .
 
       # 3. Execute tests inside the isolated Docker container
+      # -e CI=true passes the CI variable into the container so the environment setup knows it's running on GitHub
       # --ipc=host prevents Chromium crashes due to shared memory limits
       # -v mounts the host directory to capture the HTML report generated inside the container
       - name: Run Playwright tests inside Docker Container
         run: |
           docker run --name playwright-container \
+            -e CI=true \
             --ipc=host \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             my-playwright-tests
