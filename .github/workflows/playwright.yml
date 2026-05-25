@@ -1,10 +1,21 @@
-name: Playwright Tests in Docker
+name: Playwright Tests inside Docker
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, docker]
   pull_request:
     branches: [main, master]
+  # Allows execution via GitHub UI or via 'gh' CLI from your local terminal
+  workflow_dispatch:
+    inputs:
+      test_environment:
+        description: 'Where to route tests from inside Docker?'
+        required: true
+        default: 'github-local'
+        type: choice
+        options:
+          - 'github-local'
+          - 'browserstack-cloud'
 
 jobs:
   test:
@@ -12,22 +23,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Fetch the repository code using the updated v5 action (Node 24 native)
+      # 1. Fetch repository code onto the runner
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # 2. Build the Docker image using the project Dockerfile
+      # 2. Build Docker Image
       - name: Build Docker Image
         run: docker build -t my-playwright-tests .
 
-      # 3. Execute tests inside the isolated Docker container
+      # 3. Execute container and route traffic dynamically
       - name: Run Playwright tests inside Docker Container
         run: |
-          docker run --name playwright-container \
-            -e CI=true \
-            --ipc=host \
-            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
-            my-playwright-tests
+          CHOICE="${{ github.event.inputs.test_environment }}"
+
+          if [ -z "$CHOICE" ]; then
+            CHOICE="github-local"
+          fi
+
+          if [ "$CHOICE" = "browserstack-cloud" ]; then
+            echo "🚀 Environment: Docker Container -> BrowserStack Cloud Grid"
+            docker run --name playwright-container \
+              -e CI=true \
+              -e TEST_TARGET=browserstack \
+              -e BROWSERSTACK_USERNAME="${{ secrets.BROWSERSTACK_USERNAME }}" \
+              -e BROWSERSTACK_ACCESS_KEY="${{ secrets.BROWSERSTACK_ACCESS_KEY }}" \
+              --ipc=host \
+              -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+              my-playwright-tests npm run test:cloud
+          else
+            echo "🏠 Environment: Docker Container -> Isolated GitHub Runner"
+            docker run --name playwright-container \
+              -e CI=true \
+              --ipc=host \
+              -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+              my-playwright-tests npm run test
+          fi
 
       # 4. Extract and preserve the HTML test report
       - name: Upload Playwright Report
