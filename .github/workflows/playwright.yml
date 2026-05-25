@@ -2,7 +2,7 @@ name: Playwright Tests inside Docker
 
 on:
   push:
-    branches: [main, master, docker]
+    branches: [main, master]
   pull_request:
     branches: [main, master]
   # Allows execution via GitHub UI or via 'gh' CLI from your local terminal
