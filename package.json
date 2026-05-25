@@ -4,13 +4,19 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "_comment1": "LOCAL RUNS (No Docker needed)",
     "test": "npx playwright test",
     "test:ui": "npx playwright test --ui",
     "test:auth": "npx playwright test tests/auth/",
     "test:func": "npx playwright test tests/functional/",
     "test:static": "npx playwright test tests/static/",
     "codegen": "npx playwright codegen",
-    "prepare": "husky"
+    "prepare": "husky",
+    "_comment2": "BROWSERSTACK DIRECT RUN (From PC to Cloud, no Docker)",
+    "test:cloud": "cross-env TEST_TARGET=browserstack npx browserstack-node-sdk playwright test",
+    "_comment3": "CI PIPELINES (Triggers Docker on GitHub servers via GitHub CLI)",
+    "ci:docker": "gh workflow run \"Playwright Tests inside Docker\" -f test_environment=\"github-local\"",
+    "ci:browserstack": "gh workflow run \"Playwright Tests inside Docker\" -f test_environment=\"browserstack-cloud\""
   },
   "keywords": [],
   "author": "",
@@ -20,6 +26,7 @@
     "@faker-js/faker": "^10.3.0",
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.1",
+    "browserstack-node-sdk": "^1.55.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3"
